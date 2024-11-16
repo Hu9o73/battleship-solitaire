@@ -6,7 +6,7 @@ This repository is made to version a school asignment. The asignment was given a
 
 In this exercise, you will write a program to solve Battleship Solitaire Puzzles by formulating it as a Constraint Satisfaction Problem (CSP). Battleship Solitaire is a single-player variant of the classic Battleship game. Unlike the two-player version, Battleship Solitaire provides hints on the number of ship segments within each row and column. Your goal is to deduce the exact placement and orientation of each ship segment on the grid.
 
-[IMG Fig3]
+![Main Image](./Images/battleshipMain.png)
 
 ### Game Rules
 
@@ -76,10 +76,11 @@ My program will be tested on various Battleship Solitaire puzzles. The input for
   </li>
 </ul>
 
-[IMG input]
+![Input Image](./Images/input.png)
 
 ### Output format
 
 The output should be a completed 6 × 6 grid representing the solution to the puzzle. Ensure there are no ’0’ characters remaining in the output. Each cell should display one of the seven possible values, indicating the correct placement of each ship segment.
 
-[IMG output]
+![Output Image](./Images/output.png)
+
