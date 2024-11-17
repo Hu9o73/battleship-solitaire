@@ -19,7 +19,7 @@ class Variable:
     
 
     def setState(self, state):
-        if state in self.domain:
+        if state in self.domain or state == "0" or state == None:
             self.state = state
             pass
         else:
@@ -68,7 +68,17 @@ class CSP:
     
 
 
+def solutionGridBuilder(solution, rows=6, cols=6):
+    matrix = [["" for _ in range(cols)] for _ in range(rows)]
 
+    # Fill the matrix
+    for var, value in solution.items():
+        # Extract coordinates from variable name
+        __, ___, row, col = var.name.split("_")
+        row, col = int(row), int(col)
+        matrix[row][col] = value
+
+    return matrix
 
 
 
@@ -100,7 +110,7 @@ class BattleShipProblem(CSP):
         self.gridVarRow = []
         self.gridVarCol = []
         #self.domain = ['0','.','S','<','>','M','^','v']
-        self.domain = ['0','M']
+        self.domain = ['.','M']
         
 
         # Defining gridVarRow and gridVarCol
@@ -134,36 +144,48 @@ class BattleShipProblem(CSP):
     
 
     def backtracking_search(self, assignment = {}):
-        self.recursive_backtracking()
-        pass
+        return self.recursive_backtracking(assignment)
+        
 
 
 
     def recursive_backtracking(self, assignment):
+        self.printGrid()
         if self.is_complete(assignment):
+            print("Assignment is complete !")
             return assignment
 
+        print("Selecting variable...")
         var = self.select_unassigned_variable(assignment)
-        print(var)
+        print("Variable selected : ", var)
 
         if not var:
+            print("Variable not valid")
             return None  # No unassigned variable found
 
+        print("Starting loop...")
         for value in var.domain:
-            if self.is_consistent(var, value, assignment):
-                print(f"Trying {value} for {var.name}")  # Debugging
+            print("Value selected : ", value)
+            if self.is_consistent(var, value):
+                print(f"BSP consistent. Trying {value} for {var.name}")  # Debugging
                 var.setState(value)
+                print("State set: ", var.state)
                 assignment[var] = value
+                print("Assignment set: ", assignment[var])
 
                 result = self.recursive_backtracking(assignment)
                 if result is not None:
+                    print("Returning a not None result: ", result)
                     return result
 
                 # Backtrack
                 print(f"Backtracking on {var.name}")
                 del assignment[var]
-                var.setState(None)
+                var.setState("0")
+                print("Backtracking... updated state: ", var.state)
+                self.printGrid()
 
+        print("Returning none...")
         return None
 
     
@@ -176,14 +198,14 @@ class BattleShipProblem(CSP):
             print()
 
         print("-----------")
-        pass
+
 
     def is_complete(self, assignment):
         # Check if all variables are assigned and all constraints are satisfied
         return len(assignment) == len(self.variables) and all(cons.check() for cons in self.constraints)
     
 
-    def get_next_unassigned_variable(self, assignment):
+    def select_unassigned_variable(self, assignment):
         # First unassigned variable is chosen
         for var in self.variables:
             if var not in assignment:
@@ -191,10 +213,13 @@ class BattleShipProblem(CSP):
 
         return None
     
-    def is_consistent(self, var, value, assignment):
+    def is_consistent(self, var, value):
         var.setState(value)
         #print("TempVar : ", var)
         for cons in self.constraints:
+            if var in cons.scope:
+                print(cons)
+
             if var in cons.scope and not cons.check():
                 var.setState(None)
                 return False

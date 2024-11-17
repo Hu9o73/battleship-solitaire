@@ -11,10 +11,16 @@ def isLineRespected(array):
     unassigned = 0
 
     for var in array[1:]:
+        #print(var.state, end="")
         if var.state in ['S', 'M', '<', '>', '^', 'v']:  # Valid ship parts
             count += 1
-        elif var.state is None or var.state is '0':  # Unassigned cell
+        elif var.state == None or var.state == '0':  # Unassigned cell
             unassigned += 1
-
+    
+    #print()
+    #for val in array[1:]:
+        #print("Name : ", val.name, " | state : ", val.state, end= " | ")
+    
+    #print("Count:", count, " | unassigned: ", unassigned, " | Target : ", target)
     # Constraint is satisfied if we can still potentially reach the target
     return count <= target and (count + unassigned) >= target
