@@ -20,22 +20,23 @@ def printVarGrid(grid: List[List[any]]):
 
     print("--------")
 
-def printBsGrid(bsGrid:List[List[any]], vertical:List[any], horizontal:List[any]):
+def makeBsGrid(bsGrid:List[List[any]], vertical:List[any], horizontal:List[any]):
     '''
-    Printing a grid, alongside its veritcal and horizontal constraints.
+    Makes a grid that can be drawn nicely !
     '''
-    print("", end="  ")
+    newGrid = []
+    newGrid.append([])
+    newGrid[0].append('x')
     for val in vertical:
-        print(val, end=" ")
-    print()
+        newGrid[0].append(val)
 
-    counter = 0
-    for row in bsGrid:
-        print(horizontal[counter], end= " ")
-        for col in row:
-            print(col, end =" ")
-        print()
-        counter+=1
+    for i in range(len(horizontal)):
+        newGrid.append([])
+        newGrid[i+1].append(horizontal[i])
+        for val in bsGrid[i]:
+            newGrid[i+1].append(val)
+
+    return newGrid
 
 
 def getSurroundingTiles(matrix: List[List[any]], x: int, y: int) -> List[List[any]]:
