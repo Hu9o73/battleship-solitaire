@@ -232,9 +232,10 @@ class BattleShipProblem(CSP):
                 var.setState('0')                           # We set the state to 0
                 return False                                # And return false
         
-        if not surroundedByWater(self.gridVarRow):          # Testing second constraint : are all boats surrounded by water ?
+        # No need, keep here temporarily just in case - surroundedByWater was implemented as a normal constraint, inside of bsp.
+        '''if not surroundedByWater(self.gridVarRow):          # Testing second constraint : are all boats surrounded by water ?
             var.setState('0')                               # If not, set the state to 0
-            return False                                    # And return false
+            return False                                    # And return false'''
         
         var.setState('0')                                   # Otherwise we reset the state
         return True                                         # But return true
