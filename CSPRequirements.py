@@ -42,7 +42,6 @@ class Constraint:
     def check(self):
         '''Check if constraint is respected by applying its associted function to its scope
         (= the variables related to the constraint.)'''
-
         if self.function(self.scope) == False:
                 return False
         
@@ -116,11 +115,12 @@ class BattleShipProblem(CSP):
         self.grid = grid                                                        # Defining the "grid" as an array
         self.gridVarRow = []                                                    # Initialize the gridVarRow, a matrix where each element is an array representing a row
         self.gridVarCol = []                                                    # Initialize the gridVarRow, a matrix where each element is an array representing a column
-        #self.domain = ['0','.','S','<','>','M','^','v']
         self.domain = ['.','M']                                                 # Defining the domain. We only use M and . for efficiency purposes. Considering M tiles as ships, depending on where they are we can know what exact type it is (^,v,>,<,S)
         
         self.horizontal = horizontal                # Used to return these values if needed
         self.vertical = vertical                    # Used to return these values if needed
+        self.ships = ships
+        self.finished = False
 
         # Defining gridVarRow and gridVarCol
         rowNum = 0
@@ -152,6 +152,10 @@ class BattleShipProblem(CSP):
         defineLineConstraints(self, self.gridVarCol, vertical, "COL")       # Using defineLine function to set the col constraints
         cons = Constraint("PROX", self.gridVarRow, surroundedByWater)
         self.constraints.append(cons)
+        self.shipsAndGrid = [self.ships, self.gridVarRow, lambda: self.finished]
+        cons = Constraint("SHIPS", self.shipsAndGrid, shipCounter)
+        self.constraints.append(cons)
+
 
     def solve(self, method):
         '''
@@ -164,13 +168,25 @@ class BattleShipProblem(CSP):
             return self.backtracking_search()
         else:
             return None
-        
+    
+
+    def getAssigned(self):
+        assignment = {}
+        for row in self.gridVarRow:
+            for col in row:
+                if(col.state != '0'):
+                    assignment[col] = col.state
+
+
+        return assignment
+
 
     def backtracking_search(self, assignment = {}):
         '''
         Perform a backtracking search to solve the problem.
         If it finds a solution, its yielded as a dictionnary, where each variable of our problem has an associated state.
         '''
+        assignment = self.getAssigned()
         return self.recursive_backtracking(assignment)  # Start backtracking recursion
         
 
@@ -186,6 +202,10 @@ class BattleShipProblem(CSP):
             return None                                     # We return None, as no new variable is available
 
         for value in var.domain:                            # Otherwise, for every value in the variable's domain ( [., M] normally)
+            if len(assignment) == len(self.variables)-1:
+                self.finished = True
+            else:
+                self.finished = False
             if self.is_consistent(var, value):              # We check the consistency of our solution if we temporarily set the variable's state to the given value
                 var.setState(value)                         # If it is, we set the variable's state to the given value
                 assignment[var] = value                     # And add this change to our final solution
@@ -216,7 +236,7 @@ class BattleShipProblem(CSP):
             Simply returns the next unassigned variable.'''
         
         for var in self.variables:          # For all variables
-            if var not in assignment:       # If var is not assigned
+            if var not in assignment and var.state == '0':       # If var is not assigned
                 return var                  # We return it
             
         return None                         # Otherwise we return None
@@ -227,21 +247,22 @@ class BattleShipProblem(CSP):
             breaks the constraints the variable is related to.'''
         
         var.setState(value)                                 # Setting the state temporarily
+        #printVarGrid(self.gridVarRow)
         for cons in self.constraints:                       # For all constraints in the bs problem
-            if var in cons.scope and not cons.check():      # If the variable is in its scope and breaks the constraints
+            if not cons.check():                            # If the variable is in its scope and breaks the constraints
+                print("Not CHECKED CONS : ", cons.name)
                 var.setState('0')                           # We set the state to 0
                 return False                                # And return false
-        
-        # No need, keep here temporarily just in case - surroundedByWater was implemented as a normal constraint, inside of bsp.
-        '''if not surroundedByWater(self.gridVarRow):          # Testing second constraint : are all boats surrounded by water ?
-            var.setState('0')                               # If not, set the state to 0
-            return False                                    # And return false'''
-        
+            else:
+                print("CHECKED FOR : ", cons.name)
+
+        print("ALL CHECK")
         var.setState('0')                                   # Otherwise we reset the state
         return True                                         # But return true
     
     def is_complete(self, assignment):
         '''Check if all variables are assigned and all constraints are satisfied'''
+        print("COMPLETE : COND1 : ", len(assignment) ,"/", len(self.variables), " - ", len(assignment) == len(self.variables) , "COND2 : ", all(cons.check() for cons in self.constraints))
         return len(assignment) == len(self.variables) and all(cons.check() for cons in self.constraints)
         
     

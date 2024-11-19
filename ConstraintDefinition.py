@@ -1,6 +1,5 @@
 from GridSystem import *
 from typing import List,Tuple
-import CSPRequirements
 
 def isLineRespected(array):
     '''
@@ -81,6 +80,50 @@ def surroundedByWater(grid: List[List[any]]) -> bool:
                                     #print("Looked in grid [",x,",",y,"] | Not surrounded by water ! : [",nx,",",ny,"] | ", grid[ny][nx].state, " | not in boat : ", boat )
                                     return False                       
     return True
+
+
+def get_all_ships(grid: List[List[any]]) -> List[List[Tuple[int, int]]]:
+    """
+    Finds all ships in the grid and returns them as a list of boats (each boat is a list of coordinates).
+    """
+    visited = set()  # To keep track of visited cells
+    ships = []  # To store all the boats
+
+    for y in range(len(grid)):
+        for x in range(len(grid[0])):
+            if grid[y][x].state == 'M' and (x, y) not in visited:
+                # Find a new boat starting from (x, y)
+                boat = find_boat(grid, x, y, visited)
+                ships.append(boat)
+
+    return ships
+
+
+def shipCounter(shipsAndGrid):
+    ships, grid, finished_func = shipsAndGrid[0], shipsAndGrid[1], shipsAndGrid[2]
+    finished = finished_func()
+    shipList = get_all_ships(grid)
+
+    targetSub, targetDestroyer, targetCruiser, targetBattleship = ships[0], ships[1], ships[2], ships[3]
+    subs, destroyers, cruisers, battleships = 0, 0, 0, 0
+    
+    for ship in shipList:
+        if len(ship) == 1:
+            subs += 1
+        elif len(ship) == 2:
+            destroyers += 1
+        elif len(ship) == 3:
+            cruisers += 1
+        elif len(ship) == 4:
+            battleships += 1
+    
+    #print("FINISHED : ", finished, " | Subs : ", subs, "/", targetSub, " | Destroyers : ", destroyers, "/", targetDestroyer, " | Cruisers : ", cruisers,"/",targetCruiser," | Battleships : ", battleships,"/",targetBattleship )
+    
+    if finished == True and (destroyers != targetDestroyer or subs != targetSub or cruisers != targetCruiser or battleships != targetBattleship):
+        return False
+    else:
+        return True
+
 
 
 # Note : Completeness will be checked in an "is_complete" function, making sure the solution is consitent AND all variables are assigned.
