@@ -6,8 +6,8 @@ def parse_battleship_input(file_path):
     lines = [line.strip() for line in lines]
     
     # Constraints
-    horizontal_numbers = list(map(int, lines[0]))
-    vertical_numbers = list(map(int, lines[1]))
+    horizontal_numbers = list(map(int, lines[1]))
+    vertical_numbers = list(map(int, lines[0]))
     
     # Ship counts
     ship_counts = list(map(int, lines[2]))

@@ -150,7 +150,8 @@ class BattleShipProblem(CSP):
         # Setting the constraints
         defineLineConstraints(self, self.gridVarRow, horizontal, "ROW")     # Using defineLine function to set the row constraints
         defineLineConstraints(self, self.gridVarCol, vertical, "COL")       # Using defineLine function to set the col constraints
-    
+        cons = Constraint("PROX", self.gridVarRow, surroundedByWater)
+        self.constraints.append(cons)
 
     def solve(self, method):
         '''
@@ -196,8 +197,7 @@ class BattleShipProblem(CSP):
 
                 # Backtrack                                  If we ever come back to this place, it means that result was None, meaning that no solution was found
                 del assignment[var]                         # We delete the assignment in our solution
-                var.setState(None)                          # And set the state back to None (or 0, which would mean unassigned)
-
+                var.setState('0')                          # And set the state back to None (or 0, which would mean unassigned)
         return None                                         # After having check all the possible value, if no solution was found we return None
 
     
@@ -229,9 +229,14 @@ class BattleShipProblem(CSP):
         var.setState(value)                                 # Setting the state temporarily
         for cons in self.constraints:                       # For all constraints in the bs problem
             if var in cons.scope and not cons.check():      # If the variable is in its scope and breaks the constraints
-                var.setState(None)                          # We set the state to None
+                var.setState('0')                           # We set the state to 0
                 return False                                # And return false
-        var.setState(None)                                  # Otherwise we reset the state
+        
+        if not surroundedByWater(self.gridVarRow):          # Testing second constraint : are all boats surrounded by water ?
+            var.setState('0')                               # If not, set the state to 0
+            return False                                    # And return false
+        
+        var.setState('0')                                   # Otherwise we reset the state
         return True                                         # But return true
     
     def is_complete(self, assignment):

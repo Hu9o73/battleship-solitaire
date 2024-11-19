@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 def printGrid(grid: List[List[any]]):
     '''
@@ -9,6 +9,16 @@ def printGrid(grid: List[List[any]]):
             print(col, end= " ")
         print("")
 
+    print("--------")
+
+def printVarGrid(grid: List[List[any]]):
+
+    for row in grid:
+        for col in row:
+            print(col.state, end = " ")
+        print("")
+
+    print("--------")
 
 def printBsGrid(bsGrid:List[List[any]], vertical:List[any], horizontal:List[any]):
     '''
@@ -46,3 +56,15 @@ def getSurroundingTiles(matrix: List[List[any]], x: int, y: int) -> List[List[an
                 surroundingTiles[dy + 1][dx + 1] = matrix[ny][nx]
     
     return surroundingTiles
+
+
+
+def get_neighbors(x: int, y: int, rows: int, cols: int) -> List[Tuple[int, int]]:
+    """Returns the valid neighbors of a cell (x, y) in a grid."""
+    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # up, down, left, right
+    neighbors = []
+    for dx, dy in directions:
+        nx, ny = x + dx, y + dy
+        if 0 <= nx < cols and 0 <= ny < rows:
+            neighbors.append((nx, ny))
+    return neighbors

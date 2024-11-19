@@ -1,3 +1,7 @@
+from GridSystem import *
+from typing import List,Tuple
+import CSPRequirements
+
 def isLineRespected(array):
     '''
     Used to check if a line's target value is respected.
@@ -25,6 +29,58 @@ def isLineRespected(array):
     # We return True if the count <= target and the count + unassigned values >= target
     # This way, the function will yield True if count == target (because unassigned would be 0) or if we still can place ships
     return count <= target and (count + unassigned) >= target
+
+
+def find_boat(grid: List[List[any]], x: int, y: int, visited: set) -> List[Tuple[int, int]]:
+    """Finds all parts of a boat starting from (x, y) and ensures it's in one direction."""
+    boat = []
+    stack = [(x, y)]
+    direction = None  # To store the direction of the boat ('horizontal' or 'vertical')
+    
+    while stack:
+        cx, cy = stack.pop()
+        if (cx, cy) not in visited:
+            visited.add((cx, cy))
+            boat.append((cx, cy))
+            for nx, ny in get_neighbors(cx, cy, len(grid), len(grid[0])):
+                if grid[ny][nx].state == 'M' and (nx, ny) not in visited:
+                    if direction is None:
+                        # Determine initial direction
+                        if nx == cx:
+                            direction = 'vertical'
+                        elif ny == cy:
+                            direction = 'horizontal'
+                    
+                    # Ensure the current tile is in the same direction
+                    elif (direction == 'vertical' and nx != cx) or (direction == 'horizontal' and ny != cy):
+                        continue
+                    
+                    stack.append((nx, ny))
+    return boat
+
+def surroundedByWater(grid: List[List[any]]) -> bool:
+    rows, cols = len(grid), len(grid[0])
+    visited = set()
+
+    for y in range(rows):
+        for x in range(cols):
+            if grid[y][x].state == 'M' and (x, y) not in visited:
+                # Found a new boat, let's collect its coordinates
+                boat = find_boat(grid, x, y, visited)
+
+                # Check surrounding of the boat
+                for bx, by in boat:
+                    for dy in range(-1, 2):
+                        for dx in range (-1, 2):
+                            nx, ny = bx + dx, by + dy
+                            # Skip out-of-bound indices and the boat's own position
+                            if (dx == 0 and dy == 0) or not (0 <= ny < rows and 0 <= nx < cols):
+                                continue
+                            else:
+                                if (grid[ny][nx].state != '.' and grid[ny][nx].state != '0') and (tuple([nx,ny]) not in boat):
+                                    #print("Looked in grid [",x,",",y,"] | Not surrounded by water ! : [",nx,",",ny,"] | ", grid[ny][nx].state, " | not in boat : ", boat )
+                                    return False                       
+    return True
 
 
 # Note : Completeness will be checked in an "is_complete" function, making sure the solution is consitent AND all variables are assigned.
