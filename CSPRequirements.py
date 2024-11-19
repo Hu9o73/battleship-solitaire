@@ -3,6 +3,7 @@
 #   - Parsing input (to read input files)
 from ConstraintDefinition import *
 from ParsingInput import *
+from GridSystem import *
 
 class Variable:
     '''Class used to define variables.'''
@@ -97,7 +98,6 @@ def defineLineConstraints(bspb, gridVar, direction, label="Line"):
         cons = Constraint("{}_{}".format(label, lineCount), array, isLineRespected)   # We build a constraint based on this array, with function isLineRespected.
         bspb.constraints.append(cons)           # We add the constraint to the battleship CSP problem given as parameter
         lineCount +=1                           # We add one line to the final count
-
 
 
 
@@ -239,4 +239,39 @@ class BattleShipProblem(CSP):
         return len(assignment) == len(self.variables) and all(cons.check() for cons in self.constraints)
         
     
-    
+
+
+
+def drawShips(grid: List[List[str]]) -> List[List[str]]:
+    rows, cols = len(grid), len(grid[0])
+    newGrid = [[None for _ in range(cols)] for _ in range(rows)]
+
+    for y in range(rows):
+        for x in range(cols):
+            if grid[y][x] == 'M':  # Found a ship cell
+                surrounding = getSurroundingTiles(grid, x, y)
+
+                # Determine ship type based on surrounding tiles
+                above = surrounding[0][1]
+                below = surrounding[2][1]
+                left = surrounding[1][0]
+                right = surrounding[1][2]
+
+                if above == 'M' and below == 'M':
+                    newGrid[y][x] = 'M'  # Part of vertical ship
+                elif left == 'M' and right == 'M':
+                    newGrid[y][x] = 'M'  # Part of horizontal ship
+                elif above == 'M':
+                    newGrid[y][x] = 'v'
+                elif below == 'M':
+                    newGrid[y][x] = '^'
+                elif left == 'M':
+                    newGrid[y][x] = '>'
+                elif right == 'M':
+                    newGrid[y][x] = '<'
+                else:
+                    newGrid[y][x] = 'S'  # Single tile ship
+            else:
+                newGrid[y][x] = '.'
+
+    return newGrid
