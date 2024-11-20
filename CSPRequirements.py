@@ -98,7 +98,22 @@ def defineLineConstraints(bspb, gridVar, direction, label="Line"):
         bspb.constraints.append(cons)           # We add the constraint to the battleship CSP problem given as parameter
         lineCount +=1                           # We add one line to the final count
 
+def defineTypeConstraint(bspb, gridVar):
 
+    row = 0
+    for line in gridVar:
+        col = 0
+        for value in line:
+            array = []
+            array.append(value)
+            array.append(gridVar)
+
+            cons = Constraint("TypeOf_{}_{}".format(row,col), array, stateConstraint)
+            bspb.constraints.append(cons)
+
+            col += 1
+
+        row += 1
 
 class BattleShipProblem(CSP):
     '''
@@ -115,7 +130,8 @@ class BattleShipProblem(CSP):
         self.grid = grid                                                        # Defining the "grid" as an array
         self.gridVarRow = []                                                    # Initialize the gridVarRow, a matrix where each element is an array representing a row
         self.gridVarCol = []                                                    # Initialize the gridVarRow, a matrix where each element is an array representing a column
-        self.domain = ['.','M']                                                 # Defining the domain. We only use M and . for efficiency purposes. Considering M tiles as ships, depending on where they are we can know what exact type it is (^,v,>,<,S)
+        self.domain = ['.', 'M', '<', '>', '^', 'v', 'S']
+        #self.domain = ['.','M']                                                 # Defining the domain. We only use M and . for efficiency purposes. Considering M tiles as ships, depending on where they are we can know what exact type it is (^,v,>,<,S)
         
         self.horizontal = horizontal                # Used to return these values if needed
         self.vertical = vertical                    # Used to return these values if needed
@@ -145,9 +161,9 @@ class BattleShipProblem(CSP):
                 tempCol.append(self.gridVarRow[j][i])   # We add to our temp column its value (the variable)
 
             self.gridVarCol.append(tempCol)             # Once done, we add the full temp Column to the gridVarCol matrix
-
-
+        
         # Setting the constraints
+        
         defineLineConstraints(self, self.gridVarRow, horizontal, "ROW")     # Using defineLine function to set the row constraints
         defineLineConstraints(self, self.gridVarCol, vertical, "COL")       # Using defineLine function to set the col constraints
         cons = Constraint("PROX", self.gridVarRow, surroundedByWater)
@@ -155,6 +171,7 @@ class BattleShipProblem(CSP):
         self.shipsAndGrid = [self.ships, self.gridVarRow, lambda: self.finished]
         cons = Constraint("SHIPS", self.shipsAndGrid, shipCounter)
         self.constraints.append(cons)
+        defineTypeConstraint(self, self.gridVarRow)
 
 
     def solve(self, method):
@@ -192,7 +209,6 @@ class BattleShipProblem(CSP):
 
     def recursive_backtracking(self, assignment):
         '''Recursive backtracking function.'''
-
         if self.is_complete(assignment):                    # If assignment is complete (all variables assignated + constraints validated)
             return assignment                               # We return the solution 
 
@@ -247,14 +263,15 @@ class BattleShipProblem(CSP):
             breaks the constraints the variable is related to.'''
         
         var.setState(value)                                 # Setting the state temporarily
-        #printVarGrid(self.gridVarRow)
+        printVarGrid(self.gridVarRow)
+        print("Trying : ",value, " for VAR: ", var.name)
         for cons in self.constraints:                       # For all constraints in the bs problem
-            if not cons.check():                            # If the variable is in its scope and breaks the constraints
+            if var in cons.scope and not cons.check():                            # If the variable is in its scope and breaks the constraints
                 print("Not CHECKED CONS : ", cons.name)
                 var.setState('0')                           # We set the state to 0
                 return False                                # And return false
-            else:
-                print("CHECKED FOR : ", cons.name)
+            #else:
+                #print("CHECKED FOR : ", cons.name)
 
         print("ALL CHECK")
         var.setState('0')                                   # Otherwise we reset the state
