@@ -263,23 +263,23 @@ class BattleShipProblem(CSP):
             breaks the constraints the variable is related to.'''
         
         var.setState(value)                                 # Setting the state temporarily
-        printVarGrid(self.gridVarRow)
-        print("Trying : ",value, " for VAR: ", var.name)
+        #printVarGrid(self.gridVarRow)
+        #print("Trying : ",value, " for VAR: ", var.name)
         for cons in self.constraints:                       # For all constraints in the bs problem
             if var in cons.scope and not cons.check():                            # If the variable is in its scope and breaks the constraints
-                print("Not CHECKED CONS : ", cons.name)
+                #print("Not CHECKED CONS : ", cons.name)
                 var.setState('0')                           # We set the state to 0
                 return False                                # And return false
             #else:
                 #print("CHECKED FOR : ", cons.name)
 
-        print("ALL CHECK")
+        #print("ALL CHECK")
         var.setState('0')                                   # Otherwise we reset the state
         return True                                         # But return true
     
     def is_complete(self, assignment):
         '''Check if all variables are assigned and all constraints are satisfied'''
-        print("COMPLETE : COND1 : ", len(assignment) ,"/", len(self.variables), " - ", len(assignment) == len(self.variables) , "COND2 : ", all(cons.check() for cons in self.constraints))
+        #print("COMPLETE : COND1 : ", len(assignment) ,"/", len(self.variables), " - ", len(assignment) == len(self.variables) , "COND2 : ", all(cons.check() for cons in self.constraints))
         return len(assignment) == len(self.variables) and all(cons.check() for cons in self.constraints)
         
     

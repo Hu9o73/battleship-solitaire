@@ -66,7 +66,7 @@ def surroundedByWater(grid: List[List[any]]) -> bool:
             if grid[y][x].state in ['M','S','<','>','^','v'] and (x, y) not in visited:
                 # Found a new boat, let's collect its coordinates
                 boat = find_boat(grid, x, y, visited)
-                print("Found boat : ", boat)
+                #print("Found boat : ", boat)
 
                 # Check surrounding of the boat
                 for bx, by in boat:
@@ -78,7 +78,7 @@ def surroundedByWater(grid: List[List[any]]) -> bool:
                                 continue
                             else:
                                 if (grid[ny][nx].state != '.' and grid[ny][nx].state != '0') and (tuple([nx,ny]) not in boat):
-                                    print("Looked in grid [",x,",",y,"] | Not surrounded by water ! : [",nx,",",ny,"] | ", grid[ny][nx].state, " | not in boat : ", boat )
+                                    #print("Looked in grid [",x,",",y,"] | Not surrounded by water ! : [",nx,",",ny,"] | ", grid[ny][nx].state, " | not in boat : ", boat )
                                     return False                       
     return True
 
@@ -118,8 +118,8 @@ def shipCounter(shipsAndGrid):
         elif len(ship) == 4:
             battleships += 1
     
-    print("SHIPS : ", shipList)
-    print("FINISHED : ", finished, " | Subs : ", subs, "/", targetSub, " | Destroyers : ", destroyers, "/", targetDestroyer, " | Cruisers : ", cruisers,"/",targetCruiser," | Battleships : ", battleships,"/",targetBattleship )
+    #print("SHIPS : ", shipList)
+    #print("FINISHED : ", finished, " | Subs : ", subs, "/", targetSub, " | Destroyers : ", destroyers, "/", targetDestroyer, " | Cruisers : ", cruisers,"/",targetCruiser," | Battleships : ", battleships,"/",targetBattleship )
     
     if finished == True and (destroyers != targetDestroyer or subs != targetSub or cruisers != targetCruiser or battleships != targetBattleship):
         return False
@@ -139,11 +139,11 @@ def stateConstraint(dataArray):
     if var.state == 'M':
         if surrounding[1][0]:
             if surrounding[1][0].state not in ['M', '<']:
-                print("False_1_0")
+                #print("False_1_0")
                 return False
             else:
                 if not surrounding[1][2] and surrounding[1][0].state in ['M','<']:
-                    print("False_1_0_B")
+                    #print("False_1_0_B")
                     return False
         else:
             if surrounding[0][1] and surrounding[0][1].state == '.':
@@ -151,27 +151,27 @@ def stateConstraint(dataArray):
 
         if surrounding[0][1]:
             if surrounding[0][1].state not in ['M','^','0','.']:
-                print("False_0_1")
+                #print("False_0_1")
                 return False
             else:
                 if not surrounding[2][1] and surrounding[0][1].state in ['M','^']:
-                    print("False_0_1_B")
+                    #print("False_0_1_B")
                     return False
         if surrounding[2][1]:
             if surrounding[2][1].state not in ['M','v', '0', '.']:
-                print("False_2_1")
+                #print("False_2_1")
                 return False
             else:
                 if not surrounding[0][1] and surrounding[2][1].state in ['M','v']:
-                    print("False_2_1_B")
+                    #print("False_2_1_B")
                     return False
         if surrounding[1][2]:
             if surrounding[1][2].state not in ['M', '>', '0', '.']:
-                print("False_1_2")
+                #print("False_1_2")
                 return False
             else:
                 if not surrounding[1][0] and surrounding[1][2].state in ['M','>']:
-                    print("False_1_2_B")
+                    #print("False_1_2_B")
                     return False
 
         return True
