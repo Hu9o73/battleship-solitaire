@@ -31,7 +31,9 @@ def isLineRespected(array):
 
 
 def find_boat(grid: List[List[any]], x: int, y: int, visited: set) -> List[Tuple[int, int]]:
-    """Finds all parts of a boat starting from (x, y) and ensures it's in one direction."""
+    '''
+    Finds all parts of a boat starting from (x, y) and ensures it's in one direction.
+    '''
     boat = []
     stack = [(x, y)]
     direction = None  # To store the direction of the boat ('horizontal' or 'vertical')
@@ -58,6 +60,9 @@ def find_boat(grid: List[List[any]], x: int, y: int, visited: set) -> List[Tuple
     return boat
 
 def surroundedByWater(grid: List[List[any]]) -> bool:
+    '''
+    Check if all the boats inside of the grid passed as parameter are surrounded by water.
+    '''
     rows, cols = len(grid), len(grid[0])
     visited = set()
 
@@ -66,7 +71,6 @@ def surroundedByWater(grid: List[List[any]]) -> bool:
             if grid[y][x].state in ['M','S','<','>','^','v'] and (x, y) not in visited:
                 # Found a new boat, let's collect its coordinates
                 boat = find_boat(grid, x, y, visited)
-                #print("Found boat : ", boat)
 
                 # Check surrounding of the boat
                 for bx, by in boat:
@@ -78,15 +82,14 @@ def surroundedByWater(grid: List[List[any]]) -> bool:
                                 continue
                             else:
                                 if (grid[ny][nx].state != '.' and grid[ny][nx].state != '0') and (tuple([nx,ny]) not in boat):
-                                    #print("Looked in grid [",x,",",y,"] | Not surrounded by water ! : [",nx,",",ny,"] | ", grid[ny][nx].state, " | not in boat : ", boat )
                                     return False                       
     return True
 
 
 def get_all_ships(grid: List[List[any]]) -> List[List[Tuple[int, int]]]:
-    """
+    '''
     Finds all ships in the grid and returns them as a list of boats (each boat is a list of coordinates).
-    """
+    '''
     visited = set()  # To keep track of visited cells
     ships = []  # To store all the boats
 
@@ -100,7 +103,16 @@ def get_all_ships(grid: List[List[any]]) -> List[List[Tuple[int, int]]]:
     return ships
 
 
-def shipCounter(shipsAndGrid):
+def shipCounter(shipsAndGrid: List[any]):
+    '''
+    Counts the number of ships inside of the grid.
+    shipsAndGrid is an array with\n
+    rank 0 being an array containing the target value for each ship type\n
+    rank 1 the grid\n
+    rank 2 the function stating if the grid is "finished" (= all variables have a state)\n
+    The function returns False if the grid is finished but the number of ships per category don't correspond to the target.\n
+    True otherwise.
+    '''
     ships, grid, finished_func = shipsAndGrid[0], shipsAndGrid[1], shipsAndGrid[2]
     finished = finished_func()
     shipList = get_all_ships(grid)
@@ -118,9 +130,6 @@ def shipCounter(shipsAndGrid):
         elif len(ship) == 4:
             battleships += 1
     
-    #print("SHIPS : ", shipList)
-    #print("FINISHED : ", finished, " | Subs : ", subs, "/", targetSub, " | Destroyers : ", destroyers, "/", targetDestroyer, " | Cruisers : ", cruisers,"/",targetCruiser," | Battleships : ", battleships,"/",targetBattleship )
-    
     if finished == True and (destroyers != targetDestroyer or subs != targetSub or cruisers != targetCruiser or battleships != targetBattleship):
         return False
     else:
@@ -128,13 +137,16 @@ def shipCounter(shipsAndGrid):
 
 
 def stateConstraint(dataArray):
+    '''
+    Function to represent the constraints on the state of each variable.\n
+    Used to check if each tile is surrounded by admissible tiles.\n
+    For instance, a "<" tile can't be followed by another "<" tile.
+    '''
     var = dataArray[0]
     grid = dataArray[1]
     __, ___, y, x = var.name.split("_")     # Extract coordinates from variable name. Split on "_". Variables formated as VAR_NAME_ROW_COL
     x, y = int(x), int(y)               # Turn the row and col values to integers 
     surrounding = getSurroundingTiles(grid, x, y)
-    #print(var.state)
-    #print(surrounding)
     
     if var.state == 'M':
         if surrounding[1][0]:
@@ -193,30 +205,16 @@ def stateConstraint(dataArray):
 
         
     elif var.state == '>':
-        #print("VAR STATE : ", var.state, " | COODS : x= ",x," y=",y)
-        #for s in surrounding:
-        #    for t in s:
-        #        if t:
-        #            print(t.state, end = " - ")
-        #        else:
-        #            print("NONE", end =" - ")
-        #    print()
         if surrounding[1][0]:
-            #print(" | Surrounding[1][0] = ", surrounding[1][0].state)
             if surrounding[1][0].state in ['M', '<']:
                 if surrounding[1][2]:
                     if surrounding[1][2].state in ['.','0']:
-                        #print("Return True...")
                         return True
                     else:
                         return False
                 else:
-                    #print("Return True...")
                     return True
-                        
-        #print("Return False...")
-        #print()
-        
+
     elif var.state == '<':
         if surrounding[1][2]:
             if surrounding[1][2].state in ['M', '>', '0']:
@@ -264,6 +262,3 @@ def stateConstraint(dataArray):
         return True
     
     return False
-
-
-# Note : Completeness will be checked in an "is_complete" function, making sure the solution is consitent AND all variables are assigned.

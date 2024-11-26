@@ -179,15 +179,22 @@ class BattleShipProblem(CSP):
         To call different solvers.\n
         Available solvers :\n
             "backtracking"\n
+            "backtracking_forwardchecking"\n
         Returns solution (dictionary)
         '''
         if(method == "backtracking"):
             return self.backtracking_search(heuristic=h)
+        elif(method == "backtracking_forwardchecking"):
+            return self.backtracking_search_fc(heuristic=h)
         else:
             return None
     
 
     def getAssigned(self):
+        '''
+        Storing all unassigned variables and their state to a dictionnary.\n
+        When called before starting to solve, this function later ensures that pre assigned variables (hints) aren't ever modified when looking for a solution.
+        '''
         assignment = {}
         for row in self.gridVarRow:
             for col in row:
@@ -200,7 +207,7 @@ class BattleShipProblem(CSP):
 
     def backtracking_search(self, assignment = {}, heuristic = None):
         '''
-        Perform a backtracking search to solve the problem.
+        Performs a backtracking search to solve the problem.
         If it finds a solution, its yielded as a dictionnary, where each variable of our problem has an associated state.
         '''
         assignment = self.getAssigned()
@@ -220,12 +227,12 @@ class BattleShipProblem(CSP):
             return None                                     # We return None, as no new variable is available
 
         active = False
-        if (heuristic == "LCV"):
+        if (heuristic == "LCV"):                            # If the heuristic is defined as LCV, we "activate" the least constraing values function
             active = True
 
-        for value in self.least_constraining_values(var, active):                            # Otherwise, for every value in the variable's domain ( [., M] normally)
-            if len(assignment) == len(self.variables)-1:
-                self.finished = True
+        for value in self.least_constraining_values(var, active):   # Otherwise, for every value in the variable's domain... (domained being ordered or not depending on LCV)
+            if len(assignment) == len(self.variables)-1:    # We check if we only have one variable left to assign
+                self.finished = True                        # If so, we consider the grid "finished" (as we're about to assign the last var)
             else:
                 self.finished = False
             if self.is_consistent(var, value):              # We check the consistency of our solution if we temporarily set the variable's state to the given value
@@ -241,6 +248,95 @@ class BattleShipProblem(CSP):
                 del assignment[var]                         # We delete the assignment in our solution
                 var.setState('0')                          # And set the state back to None (or 0, which would mean unassigned)
         return None                                         # After having check all the possible value, if no solution was found we return None
+
+
+
+
+
+
+    def backtracking_search_fc(self, assignment = {}, heuristic = None):
+        '''
+        Perform a backtracking search with forward checking.\n
+        Same function as backtracking_search but calling the forward checking recursion.
+        '''
+        assignment = self.getAssigned()
+        return self.recursive_backtracking_fc(assignment, heuristic)  # Start backtracking recursion
+        
+
+    def recursive_backtracking_fc(self, assignment, heuristic):
+        '''
+        Recursive backtracking function with forward checking.\n
+        Copy of recursive backtracking but including forward checking. 
+        '''
+        self.steps += 1                                     # Each time the function is called we add a step
+
+        if self.is_complete(assignment):                    # If assignment is complete (all variables assignated + constraints validated)
+            return assignment                               # We return the solution 
+
+        var = self.select_unassigned_variable(assignment)   # (Else) We select and unassigned variable
+
+        if not var:                                         # If we don't get a variable
+            return None                                     # We return None, as no new variable is available
+
+        active = False
+        if (heuristic == "LCV"):                            # Eventually activate LCV
+            active = True
+
+        # Make a copy of the original domains for restoring during backtracking
+        original_domains = {v: list(v.domain) for v in self.variables}
+
+        for value in self.least_constraining_values(var, active):      # Otherwise, for every value in the variable's domain...
+            if len(assignment) == len(self.variables)-1:
+                self.finished = True
+            else:
+                self.finished = False
+            if self.is_consistent(var, value):              # We check the consistency of our solution if we temporarily set the variable's state to the given value
+                var.setState(value)                         # If it is, we set the variable's state to the given value
+                assignment[var] = value                     # And add this change to our final solution
+
+                # Forward checking: Update domains of unassigned variables
+                if self.forward_check(var):
+                    result = self.recursive_backtracking_fc(assignment, heuristic)  # Continue recursively
+                    if result is not None:
+                        return result                       # If result isn't None we can return the solution we found
+
+                # Restore domains if forward checking fails
+                self.restore_domains(original_domains)
+
+                # Backtrack                                  If we ever come back to this place, it means that result was None, meaning that no solution was found
+                del assignment[var]                         # We delete the assignment in our solution
+                var.setState('0')                          # And set the state back to None (or 0, which would mean unassigned)
+        return None                                        # After having check all the possible value, if no solution was found we return None
+
+
+    def forward_check(self, var):
+        '''
+        Perform forward checking after assigning a value to var.
+        '''
+        for constraint in self.constraints:
+            if var in constraint.scope:  # Check only relevant constraints
+                for neighbor in constraint.scope:
+                    # Ensure neighbor is a Variable and unassigned
+                    if isinstance(neighbor, Variable) and neighbor != var and neighbor.state == '0':
+                        # Filter neighbor's domain based on the constraint
+                        valid_values = []
+                        for value in neighbor.domain:
+                            neighbor.setState(value)
+                            if constraint.check():              # Check if value satisfies the constraint
+                                valid_values.append(value)
+                        neighbor.setState('0')                  # Reset state
+
+                        neighbor.domain = valid_values          # Update the domain of the neighbor
+
+                        if not valid_values:                    # If domain is empty, forward checking fails
+                            return False
+        return True
+
+
+    def restore_domains(self, original_domains):
+        '''Restore the domains of all variables to the original state.'''
+        for var in self.variables:
+            var.domain = original_domains[var]
 
 
     def least_constraining_values(self, var, active):
@@ -274,8 +370,10 @@ class BattleShipProblem(CSP):
 
 
     def select_unassigned_variable(self, assignment):
-        '''Selects an unassigned variable, passing the assignment as a parameter to know what variables are assigned.
-            Simply returns the next unassigned variable.'''
+        '''
+        Selects an unassigned variable, passing the assignment as a parameter to know what variables are assigned.
+        Returns the next unassigned variable.
+        '''
         
         for var in self.variables:          # For all variables
             if var not in assignment and var.state == '0':       # If var is not assigned
@@ -285,27 +383,22 @@ class BattleShipProblem(CSP):
 
 
     def is_consistent(self, var, value):
-        '''For the given variable, checks if setting its state to the value inputed as a parameter
-            breaks the constraints the variable is related to.'''
+        '''
+        For the given variable, checks if setting its state to the value inputed as a parameter
+        breaks the constraints the variable is related to.
+        '''
         
         var.setState(value)                                 # Setting the state temporarily
-        #printVarGrid(self.gridVarRow)
-        #print("Trying : ",value, " for VAR: ", var.name)
         for cons in self.constraints:                       # For all constraints in the bs problem
-            if var in cons.scope and not cons.check():                            # If the variable is in its scope and breaks the constraints
-                #print("Not CHECKED CONS : ", cons.name)
+            if var in cons.scope and not cons.check():      # If the variable is in its scope and breaks the constraints
                 var.setState('0')                           # We set the state to 0
                 return False                                # And return false
-            #else:
-                #print("CHECKED FOR : ", cons.name)
 
-        #print("ALL CHECK")
         var.setState('0')                                   # Otherwise we reset the state
         return True                                         # But return true
     
     def is_complete(self, assignment):
         '''Check if all variables are assigned and all constraints are satisfied'''
-        #print("COMPLETE : COND1 : ", len(assignment) ,"/", len(self.variables), " - ", len(assignment) == len(self.variables) , "COND2 : ", all(cons.check() for cons in self.constraints))
         return len(assignment) == len(self.variables) and all(cons.check() for cons in self.constraints)
         
     

@@ -11,29 +11,30 @@ icons_paths = {
 }
 
 def draw_battleship_grid(grid, icon_paths = icons_paths, filename = "output.png"):
-    # Define size of each cell (in pixels)
-    cell_size = 64
-    grid_width = len(grid[0]) * cell_size
-    grid_height = len(grid) * cell_size
+    
+    cell_size = 64                              # Define the size of a cell
+    grid_width = len(grid[0]) * cell_size       # Getting the grid width
+    grid_height = len(grid) * cell_size         # and height
     
     # Create a new blank image with white background
     img = Image.new('RGB', (grid_width, grid_height), color="white")
     draw = ImageDraw.Draw(img)
 
-    # Load and resize icons based on the cell size
+    # Load and resize icons based on the cell size. Icons are custom made on another software (photoshop) and then imported to the project file as .png
     icons = {}
     for key, path in icon_paths.items():
         try:
             icon = Image.open(path)
-            icons[key] = icon.resize((cell_size, cell_size))
+            icons[key] = icon.resize((cell_size, cell_size))        # We resize the png to match the size of a cell
         except FileNotFoundError:
             print(f"Warning: Icon for '{key}' not found at {path}, using text instead.")
     
-    # Load a font for drawing text (if you want text instead of icons)
+    # Load a font for drawing text (used if the icon isn't loaded correctly)
     try:
         font = ImageFont.truetype("arial.ttf", 30)
     except IOError:
         font = ImageFont.load_default()
+
 
     # Draw the grid and its contents
     for row in range(len(grid)):

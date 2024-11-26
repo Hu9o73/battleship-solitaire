@@ -1,18 +1,13 @@
 def parse_battleship_input(file_path):
     with open(file_path, 'r') as file:
-        lines = file.readlines()
+        lines = file.readlines()                    # Reading the file at given filepat
         
-    # Strip newline characters and whitespaces
-    lines = [line.strip() for line in lines]
-    
-    # Constraints
-    horizontal_numbers = list(map(int, lines[1]))
+    lines = [line.strip() for line in lines]        # Strip newline characters and whitespaces (security measure)
+
+    horizontal_numbers = list(map(int, lines[1]))   # Getting constraints
     vertical_numbers = list(map(int, lines[0]))
-    
-    # Ship counts
     ship_counts = list(map(int, lines[2]))
-    
-    # Parse the 6x6 grid
-    grid = [list(line) for line in lines[3:]]
+
+    grid = [list(line) for line in lines[3:]]       # Parsing the grid
     
     return horizontal_numbers, vertical_numbers, ship_counts, grid
