@@ -130,9 +130,9 @@ class BattleShipProblem(CSP):
         self.grid = grid                                                        # Defining the "grid" as an array
         self.gridVarRow = []                                                    # Initialize the gridVarRow, a matrix where each element is an array representing a row
         self.gridVarCol = []                                                    # Initialize the gridVarRow, a matrix where each element is an array representing a column
-        self.domain = ['.', 'M', '<', '>', '^', 'v', 'S']
-        #self.domain = ['.','M']                                                 # Defining the domain. We only use M and . for efficiency purposes. Considering M tiles as ships, depending on where they are we can know what exact type it is (^,v,>,<,S)
-        
+        self.domain = ['.', 'M', '<', '>', '^', 'v', 'S']                       # Defining the domain
+        self.steps = 0                                                          # Initialize a step counter to compare performances
+
         self.horizontal = horizontal                # Used to return these values if needed
         self.vertical = vertical                    # Used to return these values if needed
         self.ships = ships
@@ -174,7 +174,7 @@ class BattleShipProblem(CSP):
         defineTypeConstraint(self, self.gridVarRow)
 
 
-    def solve(self, method):
+    def solve(self, method, h):
         '''
         To call different solvers.\n
         Available solvers :\n
@@ -182,7 +182,7 @@ class BattleShipProblem(CSP):
         Returns solution (dictionary)
         '''
         if(method == "backtracking"):
-            return self.backtracking_search()
+            return self.backtracking_search(heuristic=h)
         else:
             return None
     
@@ -198,17 +198,19 @@ class BattleShipProblem(CSP):
         return assignment
 
 
-    def backtracking_search(self, assignment = {}):
+    def backtracking_search(self, assignment = {}, heuristic = None):
         '''
         Perform a backtracking search to solve the problem.
         If it finds a solution, its yielded as a dictionnary, where each variable of our problem has an associated state.
         '''
         assignment = self.getAssigned()
-        return self.recursive_backtracking(assignment)  # Start backtracking recursion
+        return self.recursive_backtracking(assignment, heuristic)  # Start backtracking recursion
         
 
-    def recursive_backtracking(self, assignment):
+    def recursive_backtracking(self, assignment, heuristic):
         '''Recursive backtracking function.'''
+        self.steps += 1                                     # Each time the function is called we add a step
+
         if self.is_complete(assignment):                    # If assignment is complete (all variables assignated + constraints validated)
             return assignment                               # We return the solution 
 
@@ -217,7 +219,11 @@ class BattleShipProblem(CSP):
         if not var:                                         # If we don't get a variable
             return None                                     # We return None, as no new variable is available
 
-        for value in var.domain:                            # Otherwise, for every value in the variable's domain ( [., M] normally)
+        active = False
+        if (heuristic == "LCV"):
+            active = True
+
+        for value in self.least_constraining_values(var, active):                            # Otherwise, for every value in the variable's domain ( [., M] normally)
             if len(assignment) == len(self.variables)-1:
                 self.finished = True
             else:
@@ -226,7 +232,7 @@ class BattleShipProblem(CSP):
                 var.setState(value)                         # If it is, we set the variable's state to the given value
                 assignment[var] = value                     # And add this change to our final solution
 
-                result = self.recursive_backtracking(assignment)    # Recursion, to go on to the next variable
+                result = self.recursive_backtracking(assignment, heuristic)    # Recursion, to go on to the next variable
 
                 if result is not None:                      # If the result is not None, means that a solution was found so we return it
                     return result
@@ -235,6 +241,26 @@ class BattleShipProblem(CSP):
                 del assignment[var]                         # We delete the assignment in our solution
                 var.setState('0')                          # And set the state back to None (or 0, which would mean unassigned)
         return None                                         # After having check all the possible value, if no solution was found we return None
+
+
+    def least_constraining_values(self, var, active):
+        '''Order values in the domain of var by their impact on other variables.'''
+        def count_constraints(value):
+            var.setState(value)  # Temporarily assign the value
+            constraints_violated = 0
+            for cons in self.constraints:
+                if not cons.check():
+                    constraints_violated += 1
+            var.setState('0')  # Reset state
+            return constraints_violated
+        
+        if(active == True):
+            # Sort values by their impact (least constraining first)
+            return sorted(var.domain, key=count_constraints)
+        else:
+            # If not active, just return the domain
+            return var.domain
+
 
     
     def printGrid(self):
